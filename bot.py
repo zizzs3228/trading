@@ -195,7 +195,7 @@ def trading():
         df_higher_tf = add_rsx_HF(14,df_higher_tf)
         print(f'Работаю с {ticker}')
 
-        if df_lower_tf.iloc[-4]['low'] > df_lower_tf.iloc[-3]['low'] and df_lower_tf.iloc[-2]['close'] > df_lower_tf.iloc[-4]['open']:
+        if df_lower_tf.iloc[-4]['low'] > df_lower_tf.iloc[-3]['low'] and df_lower_tf.iloc[-2]['close'] > df_lower_tf.iloc[-4]['open'] and df_lower_tf.iloc[-4]['open'] > df_lower_tf.iloc[-4]['close']:
             print(f'up_reversal at {ticker}')
             if df_higher_tf.iloc[-2]['hidden_up_divergence']:
                 print(f'hidden_up_divergence at {ticker}')
@@ -211,7 +211,7 @@ def trading():
                     asyncio.set_event_loop(loop)
                     loop.run_until_complete(message(stringTOsend))
 
-        if df_lower_tf.iloc[-4]['high'] < df_lower_tf.iloc[-3]['high'] and df_lower_tf.iloc[-2]['close'] < df_lower_tf.iloc[-4]['open']:
+        if df_lower_tf.iloc[-4]['high'] < df_lower_tf.iloc[-3]['high'] and df_lower_tf.iloc[-2]['close'] < df_lower_tf.iloc[-4]['open'] and df_lower_tf.iloc[-4]['open'] < df_lower_tf.iloc[-4]['close']:
             print(f'down_reversal at {ticker}')
             if df_higher_tf.iloc[-2]['hidden_down_divergence']:
                 print(f'hidden_down_divergence at {ticker}')
