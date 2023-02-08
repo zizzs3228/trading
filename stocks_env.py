@@ -40,21 +40,22 @@ class StocksEnv(TradingEnv):
 
         if self._position == Positions.Long and action == Actions.Hold.value:
             if price_diff>0:
-                step_reward += 1
+                step_reward += current_price*0.0001
             if price_diff<0:
-                step_reward -= 1
+                step_reward -= current_price*0.0001
             
         if self._position == Positions.Short and action == Actions.Hold.value: 
             if price_diff<0:
-                step_reward += 1
+                step_reward += current_price*0.0001
             if price_diff>0:
-                step_reward -= 1   
+                step_reward -= current_price*0.0001
         
         if trade:
             if self._position == Positions.Long:
-                step_reward += price_diff
+                step_reward += price_diff-(current_price*0.001)
+
             if self._position == Positions.Short:
-                step_reward -= price_diff
+                step_reward -= price_diff+(current_price*0.001)
 
         return step_reward
 
@@ -68,10 +69,14 @@ class StocksEnv(TradingEnv):
         if trade or self._done:
             current_price = self.prices[self._current_tick]
             last_trade_price = self.prices[self._last_trade_tick]
+            price_diff = current_price - last_trade_price
 
             if self._position == Positions.Long:
-                shares = (self._total_profit * (1 - self.trade_fee_ask_percent)) / last_trade_price
-                self._total_profit = (shares * (1 - self.trade_fee_bid_percent)) * current_price
+                self._total_profit += (price_diff-(current_price*0.001))/last_trade_price
+                
+            if self._position == Positions.Short:
+                self._total_profit -= (price_diff+(current_price*0.001))/last_trade_price
+                
 
 
     def max_possible_profit(self):

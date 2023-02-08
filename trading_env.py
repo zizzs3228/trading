@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 
 
 class Actions(Enum):
-    Sell = -1
+    Sell = 0
     Buy = 1
-    Hold = 0
+    Hold = 2
 
 
 class Positions(Enum):
@@ -60,7 +60,7 @@ class TradingEnv(gym.Env):
         self._current_tick = self._start_tick
         self._last_trade_tick = self._current_tick - 1
         self._position = Positions.Short
-        self._action_history = (self.window_size * [None]) + [self._position]
+        self._action_history = (self.window_size * [None]) + [0]
         self._total_reward = 0.
         self._total_profit = 1.  # unit
         self._first_rendering = True
@@ -88,8 +88,14 @@ class TradingEnv(gym.Env):
         if trade:
             self._position = self._position.opposite()
             self._last_trade_tick = self._current_tick
-
-        self._action_history.append(action)
+            
+        if action == Actions.Sell.value:
+            self._action_history.append(0)
+        if action == Actions.Buy.value:
+            self._action_history.append(1)
+        if action == Actions.Hold.value:
+            self._action_history.append(2)
+        
         observation = self._get_observation()
         info = dict(
             total_reward = self._total_reward,
@@ -142,23 +148,19 @@ class TradingEnv(gym.Env):
 
 
     def render_all(self, mode='human'):
-        window_ticks = np.arange(len(self._action_history))
+        # window_ticks = np.arange(len(self._action_history))
         plt.plot(self.prices)
 
-        short_ticks = []
-        long_ticks = []
-        hold_ticks = []
-        for i, tick in enumerate(window_ticks):
-            if self._action_history[i] == Actions.Sell:
-                short_ticks.append(tick)
-            elif self._action_history[i] == Actions.Buy:
-                long_ticks.append(tick)
-            elif self._action_history[i] == Actions.Hold:
-                hold_ticks.append(tick)
+        for i in range(len(self._action_history)):
+            if self._action_history[i] == None:
+                continue
+            elif self._action_history[i] == 0:
+                plt.plot(i, self.prices[i], 'ro')
+            elif self._action_history[i] == 1:
+                plt.plot(i, self.prices[i], 'go')
+            elif self._action_history[i] == 2:
+                plt.plot(i, self.prices[i], 'yo')
 
-        plt.plot(short_ticks, self.prices[short_ticks], 'ro')
-        plt.plot(long_ticks, self.prices[long_ticks], 'go')
-        plt.plot(hold_ticks, self.prices[hold_ticks], 'yo')
 
         plt.suptitle(
             "Total Reward: %.6f" % self._total_reward + ' ~ ' +
