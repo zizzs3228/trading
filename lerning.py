@@ -44,9 +44,8 @@ def add_signals(env):
     start = env.frame_bound[0] - env.window_size
     end = env.frame_bound[1]
     prices = env.df.loc[:,'Close'].to_numpy()[start:end]
-    signal_features = env.df.loc[:,['PCTOpen','PCTHigh','PCTLow','PCTVolume','hammer','shootingstar','invertedhammer','hangingman',
-                                    'gravestonedoji','dragonflydoji','marubozu',
-                                    'RSX','AO','BOP','CMO','CTI','ER','SLOPE']].to_numpy()[start:end]
+    signal_features = env.df.loc[:,['PCTOpen','PCTHigh','PCTLow','PCTClose','PCTVolume','RSX',
+                                    'hammer','shootingstar','invertedhammer','hangingman','gravestonedoji','dragonflydoji','marubozu']].to_numpy()[start:end]
     return prices, signal_features
 
 class MyCustomEnv(StocksEnv):
@@ -65,23 +64,23 @@ testdf.set_index('date',inplace=True)
 traindf['RSX'] = ta.rsx(traindf['Close'],14)
 testdf['RSX'] = ta.rsx(testdf['Close'],14)
 
-traindf['AO'] = ta.ao(traindf['High'],traindf['Low'])
-testdf['AO'] = ta.ao(testdf['High'],testdf['Low'])
+# traindf['AO'] = ta.ao(traindf['High'],traindf['Low'])
+# testdf['AO'] = ta.ao(testdf['High'],testdf['Low'])
 
-traindf['BOP'] = ta.bop(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'])
-testdf['BOP'] = ta.bop(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'])
+# traindf['BOP'] = ta.bop(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'])
+# testdf['BOP'] = ta.bop(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'])
 
-traindf['CMO'] = ta.cmo(traindf['Close'])
-testdf['CMO'] = ta.cmo(testdf['Close'])
+# traindf['CMO'] = ta.cmo(traindf['Close'])
+# testdf['CMO'] = ta.cmo(testdf['Close'])
 
-traindf['CTI'] = ta.cti(traindf['Close'])
-testdf['CTI'] = ta.cti(testdf['Close'])
+# traindf['CTI'] = ta.cti(traindf['Close'])
+# testdf['CTI'] = ta.cti(testdf['Close'])
 
-traindf['ER'] = ta.er(traindf['Close'])
-testdf['ER'] = ta.er(testdf['Close'])
+# traindf['ER'] = ta.er(traindf['Close'])
+# testdf['ER'] = ta.er(testdf['Close'])
 
-traindf['SLOPE'] = ta.slope(traindf['Close'])
-testdf['SLOPE']= ta.slope(testdf['Close'])
+# traindf['SLOPE'] = ta.slope(traindf['Close'])
+# testdf['SLOPE']= ta.slope(testdf['Close'])
 
 
 traindf['hammer'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="hammer")
@@ -119,15 +118,17 @@ testdf[['marubozu']] = testdf[['marubozu']].replace({0.0: 0, 100: 1,-100:-1}).as
 traindf['PCTOpen'] = traindf['Open'].pct_change()
 traindf['PCTHigh'] = traindf['High'].pct_change()
 traindf['PCTLow'] = traindf['Low'].pct_change()
+traindf['PCTClose'] = traindf['Close'].pct_change()
 traindf['PCTVolume'] = traindf['Volume'].pct_change()
 
 testdf['PCTOpen'] = testdf['Open'].pct_change()
 testdf['PCTHigh'] = testdf['High'].pct_change()
 testdf['PCTLow'] = testdf['Low'].pct_change()
+testdf['PCTClose'] = testdf['Close'].pct_change()
 testdf['PCTVolume'] = testdf['Volume'].pct_change()
 
 #ИЗМЕНИ ИМЯ
-modelname = 'PPO_NEWENV_EQREW_LR=3e-0'
+modelname = 'PPO_NEWENV_NOTEQREW_ONLYRSX_CANDLES_LR=3e-1'
 log_path = os.path.join('logs')
 model_path = os.path.join('models',f'{modelname}')
 # stats_path = os.path.join(log_path, "vec_normalize.pkl")
@@ -140,8 +141,8 @@ num_cpu = 1
 env = MyCustomEnv(df=traindf, frame_bound=(start_index+50,end_index), window_size=window_size)
 
 model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=3e-0)
-# model = PPO.load("models\\PPO_PCT_CHANGE_ALLINDICS_LR=3e-0\\2480000.zip",env=env)
+# model = PPO.load("models\\PPO_NEWENV_EQREW_LR=3e-0\\1990000.zip",env=env)
 TIMESTEPS = 10000
-for i in range(1,200):
+for i in range(1,400):
     model.learn(total_timesteps=TIMESTEPS,reset_num_timesteps=False,tb_log_name=modelname)
     model.save(os.path.join(f'{model_path}',f'{TIMESTEPS*i}'))

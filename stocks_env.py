@@ -42,13 +42,13 @@ class StocksEnv(TradingEnv):
             if price_diff>0:
                 step_reward += current_price*0.0001
             if price_diff<0:
-                step_reward -= current_price*0.0001
+                step_reward -= current_price*0.001
             
         if self._position == Positions.Short and action == Actions.Hold.value: 
             if price_diff<0:
                 step_reward += current_price*0.0001
             if price_diff>0:
-                step_reward -= current_price*0.0001
+                step_reward -= current_price*0.001
         
         if trade:
             if self._position == Positions.Long:

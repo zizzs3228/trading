@@ -7,14 +7,16 @@ import matplotlib.pyplot as plt
 
 
 class Actions(Enum):
-    Sell = 0
+    Hold = 0
     Buy = 1
-    Hold = 2
+    Sell = 2
 
 
 class Positions(Enum):
-    Short = 0
+    Hold = 0
     Long = 1
+    Short = 2
+    
 
     def opposite(self):
         return Positions.Short if self == Positions.Long else Positions.Long
@@ -71,7 +73,7 @@ class TradingEnv(gym.Env):
     def step(self, action):
         self._done = False
         self._current_tick += 1
-
+        print(action)
         if self._current_tick == self._end_tick:
             self._done = True
 
@@ -89,11 +91,11 @@ class TradingEnv(gym.Env):
             self._position = self._position.opposite()
             self._last_trade_tick = self._current_tick
             
-        if action == Actions.Sell.value:
+        if action == Actions.Hold.value:
             self._action_history.append(0)
         if action == Actions.Buy.value:
             self._action_history.append(1)
-        if action == Actions.Hold.value:
+        if action == Actions.Sell.value:
             self._action_history.append(2)
         
         observation = self._get_observation()
