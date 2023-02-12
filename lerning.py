@@ -1,25 +1,8 @@
 from binance.client import Client
 import pandas as pd
-import gym
-from enum import Enum
-from gym import spaces
-from gym.utils import seeding
-# from gym_anytrading.envs import StocksEnv, ForexEnv
-import trading_env
 from stocks_env import StocksEnv
-from stable_baselines3 import A2C,PPO,DQN
-from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common.callbacks import BaseCallback
-from stable_baselines3.common.callbacks import CallbackList
-from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
-from stable_baselines3.common.env_util import make_vec_env
-import matplotlib.pyplot as plt
-import talib
-import quantstats as qs
-import numpy as np
-import tensorboard
+from stable_baselines3 import PPO
 import os
-import torch
 import pandas_ta as ta
 from pon import api,secret
 import warnings
@@ -44,8 +27,7 @@ def add_signals(env):
     start = env.frame_bound[0] - env.window_size
     end = env.frame_bound[1]
     prices = env.df.loc[:,'Close'].to_numpy()[start:end]
-    signal_features = env.df.loc[:,['PCTOpen','PCTHigh','PCTLow','PCTClose','PCTVolume','RSX',
-                                    'hammer','shootingstar','invertedhammer','hangingman','gravestonedoji','dragonflydoji','marubozu']].to_numpy()[start:end]
+    signal_features = env.df.loc[:,['Open','High','Low','Volume','RSX']].to_numpy()[start:end]
     return prices, signal_features
 
 class MyCustomEnv(StocksEnv):
@@ -61,8 +43,8 @@ traindf.set_index('date',inplace=True)
 testdf.set_index('date',inplace=True)
 
 
-traindf['RSX'] = ta.rsx(traindf['Close'],14)
-testdf['RSX'] = ta.rsx(testdf['Close'],14)
+traindf['RSX'] = ta.rsx(traindf['Close'],21)
+testdf['RSX'] = ta.rsx(testdf['Close'],21)
 
 # traindf['AO'] = ta.ao(traindf['High'],traindf['Low'])
 # testdf['AO'] = ta.ao(testdf['High'],testdf['Low'])
@@ -83,52 +65,52 @@ testdf['RSX'] = ta.rsx(testdf['Close'],14)
 # testdf['SLOPE']= ta.slope(testdf['Close'])
 
 
-traindf['hammer'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="hammer")
-traindf['shootingstar'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="shootingstar")
-testdf['hammer'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="hammer")
-testdf['shootingstar'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="shootingstar")
+# traindf['hammer'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="hammer")
+# traindf['shootingstar'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="shootingstar")
+# testdf['hammer'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="hammer")
+# testdf['shootingstar'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="shootingstar")
 
-traindf['invertedhammer'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="invertedhammer")
-traindf['hangingman'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="hangingman")
-testdf['invertedhammer'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="invertedhammer")
-testdf['hangingman'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="hangingman")
+# traindf['invertedhammer'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="invertedhammer")
+# traindf['hangingman'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="hangingman")
+# testdf['invertedhammer'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="invertedhammer")
+# testdf['hangingman'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="hangingman")
 
-traindf['gravestonedoji'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="gravestonedoji")
-traindf['dragonflydoji'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="dragonflydoji")
-testdf['gravestonedoji'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="gravestonedoji")
-testdf['dragonflydoji'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="dragonflydoji")
+# traindf['gravestonedoji'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="gravestonedoji")
+# traindf['dragonflydoji'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="dragonflydoji")
+# testdf['gravestonedoji'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="gravestonedoji")
+# testdf['dragonflydoji'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="dragonflydoji")
 
-traindf['marubozu'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="marubozu")
-testdf['marubozu'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="marubozu")
+# traindf['marubozu'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="marubozu")
+# testdf['marubozu'] = ta.cdl_pattern(testdf['Open'],testdf['High'],testdf['Low'],testdf['Close'],name="marubozu")
 
-traindf[['hammer', 'shootingstar']] = traindf[['hammer', 'shootingstar']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
-traindf[['invertedhammer', 'hangingman']] = traindf[['invertedhammer', 'hangingman']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
-traindf[['gravestonedoji', 'dragonflydoji']] = traindf[['gravestonedoji', 'dragonflydoji']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
-traindf[['marubozu']] = traindf[['marubozu']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
+# traindf[['hammer', 'shootingstar']] = traindf[['hammer', 'shootingstar']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
+# traindf[['invertedhammer', 'hangingman']] = traindf[['invertedhammer', 'hangingman']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
+# traindf[['gravestonedoji', 'dragonflydoji']] = traindf[['gravestonedoji', 'dragonflydoji']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
+# traindf[['marubozu']] = traindf[['marubozu']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
 
-testdf[['hammer', 'shootingstar']] = testdf[['hammer', 'shootingstar']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
-testdf[['invertedhammer', 'hangingman']] = testdf[['invertedhammer', 'hangingman']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
-testdf[['gravestonedoji', 'dragonflydoji']] = testdf[['gravestonedoji', 'dragonflydoji']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
-testdf[['marubozu']] = testdf[['marubozu']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
+# testdf[['hammer', 'shootingstar']] = testdf[['hammer', 'shootingstar']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
+# testdf[['invertedhammer', 'hangingman']] = testdf[['invertedhammer', 'hangingman']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
+# testdf[['gravestonedoji', 'dragonflydoji']] = testdf[['gravestonedoji', 'dragonflydoji']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
+# testdf[['marubozu']] = testdf[['marubozu']].replace({0.0: 0, 100: 1,-100:-1}).astype(float)
 #Awesome Oscillator: ao,Balance of Power: bop,Chande Momentum Oscillator: cmo,Correlation Trend Indicator: cti,Efficiency Ratio: er.
 #Moving Average Convergence Divergence: macd,Schaff Trend Cycle: stc, Slope: slope, Stochastic Oscillator: stoch, Stochastic RSI: stochrsi
 #Trix: trix
 
 
-traindf['PCTOpen'] = traindf['Open'].pct_change()
-traindf['PCTHigh'] = traindf['High'].pct_change()
-traindf['PCTLow'] = traindf['Low'].pct_change()
-traindf['PCTClose'] = traindf['Close'].pct_change()
-traindf['PCTVolume'] = traindf['Volume'].pct_change()
+# traindf['PCTOpen'] = traindf['Open'].pct_change()
+# traindf['PCTHigh'] = traindf['High'].pct_change()
+# traindf['PCTLow'] = traindf['Low'].pct_change()
+# traindf['PCTClose'] = traindf['Close'].pct_change()
+# traindf['PCTVolume'] = traindf['Volume'].pct_change()
 
-testdf['PCTOpen'] = testdf['Open'].pct_change()
-testdf['PCTHigh'] = testdf['High'].pct_change()
-testdf['PCTLow'] = testdf['Low'].pct_change()
-testdf['PCTClose'] = testdf['Close'].pct_change()
-testdf['PCTVolume'] = testdf['Volume'].pct_change()
+# testdf['PCTOpen'] = testdf['Open'].pct_change()
+# testdf['PCTHigh'] = testdf['High'].pct_change()
+# testdf['PCTLow'] = testdf['Low'].pct_change()
+# testdf['PCTClose'] = testdf['Close'].pct_change()
+# testdf['PCTVolume'] = testdf['Volume'].pct_change()
 
 #ИЗМЕНИ ИМЯ
-modelname = 'PPO_NEWENV_NOTEQREW_ONLYRSX_CANDLES_LR=3e-1'
+modelname = 'test16'
 log_path = os.path.join('logs')
 model_path = os.path.join('models',f'{modelname}')
 # stats_path = os.path.join(log_path, "vec_normalize.pkl")
@@ -143,6 +125,6 @@ env = MyCustomEnv(df=traindf, frame_bound=(start_index+50,end_index), window_siz
 model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=3e-0)
 # model = PPO.load("models\\PPO_NEWENV_EQREW_LR=3e-0\\1990000.zip",env=env)
 TIMESTEPS = 10000
-for i in range(1,400):
+for i in range(1,200):
     model.learn(total_timesteps=TIMESTEPS,reset_num_timesteps=False,tb_log_name=modelname)
     model.save(os.path.join(f'{model_path}',f'{TIMESTEPS*i}'))

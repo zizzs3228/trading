@@ -60,8 +60,8 @@ traindf.set_index('date',inplace=True)
 testdf.set_index('date',inplace=True)
 
 
-traindf['RSX'] = ta.rsx(traindf['Close'],14)
-testdf['RSX'] = ta.rsx(testdf['Close'],14)
+traindf['RSX'] = ta.rsx(traindf['Close'],21)
+testdf['RSX'] = ta.rsx(testdf['Close'],21)
 
 # traindf['AO'] = ta.ao(traindf['High'],traindf['Low'])
 # testdf['AO'] = ta.ao(testdf['High'],testdf['Low'])
