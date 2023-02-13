@@ -165,8 +165,8 @@ class TradingEnv(gym.Env):
         for i in range(len(self._action_history)):
             if self._action_history[i] == None:
                 continue
-            elif self._action_history[i] == 0:
-                plt.plot(i, self.prices[i], 'yo')
+            # elif self._action_history[i] == 0:
+            #     plt.plot(i, self.prices[i], 'yo')
             elif self._action_history[i] == 1:
                 plt.plot(i, self.prices[i], 'go')
             elif self._action_history[i] == 2:

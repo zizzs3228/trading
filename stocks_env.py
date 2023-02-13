@@ -36,37 +36,37 @@ class StocksEnv(TradingEnv):
         
         if action == Actions.Hold.value:
             if self._position == Positions.Flat:
-                step_reward -= 0.02
+                step_reward -= 0.03
             if self._position == Positions.Long:
                 if price_diff > 0:
-                    step_reward += 100
+                    step_reward += 1
                 if step_reward < 0:
-                    step_reward -= 200
+                    step_reward -= 1
             if self._position == Positions.Short:
                 if price_diff > 0:
-                    step_reward -= 200
+                    step_reward -= 1
                 if step_reward < 0:
-                    step_reward += 100
+                    step_reward += 1
         if action == Actions.Buy.value:
             if self._position == Positions.Flat:
                 step_reward = 0
             if self._position == Positions.Long:
-                step_reward -= 200
+                step_reward -= 300
             if self._position == Positions.Short:
                 if price_diff > 0:
                     step_reward -= 200
                 if step_reward < 0:
-                    step_reward += 100
+                    step_reward += 200
         if action == Actions.Sell.value:
             if self._position == Positions.Flat:
                 step_reward = 0
             if self._position == Positions.Long:
                 if price_diff > 0:
-                    step_reward += 100
+                    step_reward += 200
                 if step_reward < 0:
                     step_reward -= 200
             if self._position == Positions.Short:
-                step_reward -= 200
+                step_reward -= 300
             
 
         return step_reward
@@ -88,6 +88,12 @@ class StocksEnv(TradingEnv):
                     self._total_profit = self._total_profit + abs(price_diff)/last_trade_price
                 if price_diff > 0:
                     self._total_profit = self._total_profit - abs(price_diff)/last_trade_price
+            if self._position == Positions.Long:
+                self._total_profit = self._total_profit - fee
+                if price_diff > 0:
+                    self._total_profit = self._total_profit + abs(price_diff)/last_trade_price
+                if price_diff < 0:
+                    self._total_profit = self._total_profit - abs(price_diff)/last_trade_price
         if action == Actions.Sell.value:
             if self._position == Positions.Flat:
                 self._total_profit = self._total_profit - fee
@@ -96,6 +102,12 @@ class StocksEnv(TradingEnv):
                 if price_diff > 0:
                     self._total_profit = self._total_profit + abs(price_diff)/last_trade_price
                 if price_diff < 0:
+                    self._total_profit = self._total_profit - abs(price_diff)/last_trade_price
+            if self._position == Positions.Short:
+                self._total_profit = self._total_profit - fee
+                if price_diff < 0:
+                    self._total_profit = self._total_profit + abs(price_diff)/last_trade_price
+                if price_diff > 0:
                     self._total_profit = self._total_profit - abs(price_diff)/last_trade_price
 
                 
