@@ -27,7 +27,7 @@ def add_signals(env):
     start = env.frame_bound[0] - env.window_size
     end = env.frame_bound[1]
     prices = env.df.loc[:,'Close'].to_numpy()[start:end]
-    signal_features = env.df.loc[:,['Open','High','Low','Volume','RSX']].to_numpy()[start:end]
+    signal_features = env.df.loc[:,['PCTOpen','PCTHigh','PCTLow','PCTClose','PCTVolume','RSX']].to_numpy()[start:end]
     return prices, signal_features
 
 class MyCustomEnv(StocksEnv):
@@ -37,14 +37,18 @@ class MyCustomEnv(StocksEnv):
 
 traindf = pd.read_csv('traindf.csv')
 testdf = pd.read_csv('testdf.csv')
+enddf = pd.read_csv('enddf.csv')
 traindf['date'] = pd.to_datetime(traindf['date'])
 testdf['date'] = pd.to_datetime(testdf['date'])
+enddf['date'] = pd.to_datetime(enddf['date'])
 traindf.set_index('date',inplace=True)
 testdf.set_index('date',inplace=True)
+enddf.set_index('date',inplace=True)
 
 
 traindf['RSX'] = ta.rsx(traindf['Close'],21)
 testdf['RSX'] = ta.rsx(testdf['Close'],21)
+enddf['RSX'] = ta.rsx(enddf['Close'],21)
 
 # traindf['AO'] = ta.ao(traindf['High'],traindf['Low'])
 # testdf['AO'] = ta.ao(testdf['High'],testdf['Low'])
@@ -97,20 +101,26 @@ testdf['RSX'] = ta.rsx(testdf['Close'],21)
 #Trix: trix
 
 
-# traindf['PCTOpen'] = traindf['Open'].pct_change()
-# traindf['PCTHigh'] = traindf['High'].pct_change()
-# traindf['PCTLow'] = traindf['Low'].pct_change()
-# traindf['PCTClose'] = traindf['Close'].pct_change()
-# traindf['PCTVolume'] = traindf['Volume'].pct_change()
+traindf['PCTOpen'] = traindf['Open'].pct_change()
+traindf['PCTHigh'] = traindf['High'].pct_change()
+traindf['PCTLow'] = traindf['Low'].pct_change()
+traindf['PCTClose'] = traindf['Close'].pct_change()
+traindf['PCTVolume'] = traindf['Volume'].pct_change()
 
-# testdf['PCTOpen'] = testdf['Open'].pct_change()
-# testdf['PCTHigh'] = testdf['High'].pct_change()
-# testdf['PCTLow'] = testdf['Low'].pct_change()
-# testdf['PCTClose'] = testdf['Close'].pct_change()
-# testdf['PCTVolume'] = testdf['Volume'].pct_change()
+testdf['PCTOpen'] = testdf['Open'].pct_change()
+testdf['PCTHigh'] = testdf['High'].pct_change()
+testdf['PCTLow'] = testdf['Low'].pct_change()
+testdf['PCTClose'] = testdf['Close'].pct_change()
+testdf['PCTVolume'] = testdf['Volume'].pct_change()
+
+enddf['PCTOpen'] = enddf['Open'].pct_change()
+enddf['PCTHigh'] = enddf['High'].pct_change()
+enddf['PCTLow'] = enddf['Low'].pct_change()
+enddf['PCTClose'] = enddf['Close'].pct_change()
+enddf['PCTVolume'] = enddf['Volume'].pct_change()
 
 #ИЗМЕНИ ИМЯ
-modelname = 'test25'
+modelname = 'test31'
 log_path = os.path.join('logs')
 model_path = os.path.join('models',f'{modelname}')
 # stats_path = os.path.join(log_path, "vec_normalize.pkl")
@@ -122,7 +132,7 @@ num_cpu = 1
 
 env = MyCustomEnv(df=traindf, frame_bound=(start_index+50,end_index), window_size=window_size)
 
-model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=3e-4)
+model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=3e-3)
 # model = PPO.load("models\\PPO_NEWENV_EQREW_LR=3e-0\\1990000.zip",env=env)
 TIMESTEPS = 10000
 for i in range(1,200):
