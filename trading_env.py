@@ -82,12 +82,7 @@ class TradingEnv(gym.Env):
             
         if action == Actions.Hold.value:
             self._action_history.append(0)
-            if self._position == Positions.Flat:
-                self._position = Positions.Flat
-            if self._position == Positions.Long:
-                self._position = Positions.Long
-            if self._position == Positions.Short:
-                self._position = Positions.Short
+            
         if action == Actions.Buy.value:
             self._action_history.append(1)
             if self._position == Positions.Flat:
@@ -95,17 +90,20 @@ class TradingEnv(gym.Env):
                 self._last_trade_tick = self._current_tick
             if self._position == Positions.Long:
                 self._position = Positions.Long
+                self._last_trade_tick = self._current_tick
             if self._position == Positions.Short:
                 self._position = Positions.Flat
+                
         if action == Actions.Sell.value:
             self._action_history.append(2)
             if self._position == Positions.Flat:
                 self._position = Positions.Short
                 self._last_trade_tick = self._current_tick
-            if self._position == Positions.Long:
-                self._position = Positions.Flat
             if self._position == Positions.Short:
                 self._position = Positions.Short
+                self._last_trade_tick = self._current_tick
+            if self._position == Positions.Long:
+                self._position = Positions.Flat
         
         observation = self._get_observation()
         info = dict(
