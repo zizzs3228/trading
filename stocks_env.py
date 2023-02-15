@@ -36,7 +36,7 @@ class StocksEnv(TradingEnv):
         
         if action == Actions.Hold.value:
             if self._position == Positions.Flat:
-                step_reward = 0
+                step_reward -= 0.025
             if self._position == Positions.Long:
                 if price_diff > 0:
                     step_reward = 0
