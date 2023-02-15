@@ -120,7 +120,7 @@ enddf['PCTClose'] = enddf['Close'].pct_change()
 enddf['PCTVolume'] = enddf['Volume'].pct_change()
 
 #ИЗМЕНИ ИМЯ
-modelname = 'test73'
+modelname = 'test76'
 log_path = os.path.join('logs')
 model_path = os.path.join('models',f'{modelname}')
 # stats_path = os.path.join(log_path, "vec_normalize.pkl")
