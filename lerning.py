@@ -120,7 +120,7 @@ enddf['PCTClose'] = enddf['Close'].pct_change()
 enddf['PCTVolume'] = enddf['Volume'].pct_change()
 
 #ИЗМЕНИ ИМЯ
-modelname = 'test85'
+modelname = 'test120CR-1'
 log_path = os.path.join('logs')
 model_path = os.path.join('models',f'{modelname}')
 # stats_path = os.path.join(log_path, "vec_normalize.pkl")
@@ -132,9 +132,9 @@ num_cpu = 1
 
 env = MyCustomEnv(df=traindf, frame_bound=(start_index+50,end_index), window_size=window_size)
 
-model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=1e-5)
+model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=1e-4,ent_coef=0.01,vf_coef=2.5,batch_size=512,clip_range=1)
 # model = PPO.load("models\\PPO_NEWENV_EQREW_LR=3e-0\\1990000.zip",env=env)
 TIMESTEPS = 10000
-for i in range(1,200):
+for i in range(1,60):
     model.learn(total_timesteps=TIMESTEPS,reset_num_timesteps=False,tb_log_name=modelname)
     model.save(os.path.join(f'{model_path}',f'{TIMESTEPS*i}'))
