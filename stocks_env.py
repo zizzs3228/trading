@@ -32,51 +32,53 @@ class StocksEnv(TradingEnv):
         current_price = self.prices[self._current_tick]
         last_trade_price = self.prices[self._last_trade_tick]
         price_diff = current_price - last_trade_price
-        fee = 0.1
+        fee = 0.2
+        holding_reward = 0.005
+        holding_punishment = 0.005
         
         if action == Actions.Hold.value:
             if self._position == Positions.Flat:
-                step_reward -= 0.025
+                step_reward = 0
             if self._position == Positions.Long:
                 if price_diff > 0:
                     step_reward = 0
                 if price_diff < 0:
-                    step_reward -= 0.02
+                    step_reward = 0
             if self._position == Positions.Short:
                 if price_diff > 0:
-                    step_reward -= 0.02
+                    step_reward = 0
                 if price_diff < 0:
                     step_reward = 0
         if action == Actions.Buy.value:
             if self._position == Positions.Flat:
-                step_reward -= fee
+                step_reward = 0
             if self._position == Positions.Long:
                 step_reward -= fee
                 if price_diff > 0:
-                    step_reward += abs(price_diff)/last_trade_price
+                    step_reward += 100*(abs(price_diff)/last_trade_price)
                 if price_diff < 0:
-                    step_reward -= abs(price_diff)/last_trade_price
+                    step_reward -= 100*(abs(price_diff)/last_trade_price)
             if self._position == Positions.Short:
                 step_reward -= fee
                 if price_diff > 0:
-                    step_reward -= abs(price_diff)/last_trade_price
+                    step_reward -= 100*(abs(price_diff)/last_trade_price)
                 if price_diff < 0:
-                    step_reward += abs(price_diff)/last_trade_price
+                    step_reward += 100*(abs(price_diff)/last_trade_price)
         if action == Actions.Sell.value:
             if self._position == Positions.Flat:
-                step_reward -= fee
+                step_reward = 0
             if self._position == Positions.Long:
                 step_reward -= fee
                 if price_diff > 0:
-                    step_reward += abs(price_diff)/last_trade_price
+                    step_reward += 100*(abs(price_diff)/last_trade_price)
                 if price_diff < 0:
-                    step_reward -= abs(price_diff)/last_trade_price
+                    step_reward -= 100*(abs(price_diff)/last_trade_price)
             if self._position == Positions.Short:
                 step_reward -= fee
                 if price_diff > 0:
-                    step_reward -= abs(price_diff)/last_trade_price
+                    step_reward -= 100*(abs(price_diff)/last_trade_price)
                 if price_diff < 0:
-                    step_reward += abs(price_diff)/last_trade_price
+                    step_reward += 100*(abs(price_diff)/last_trade_price)
                 
             
 
@@ -96,30 +98,30 @@ class StocksEnv(TradingEnv):
             if self._position == Positions.Short:
                 self._total_profit = self._total_profit - fee
                 if price_diff < 0:
-                    self._total_profit = self._total_profit + abs(price_diff)/last_trade_price
+                    self._total_profit = self._total_profit + 100*(abs(price_diff)/last_trade_price)
                 if price_diff > 0:
-                    self._total_profit = self._total_profit - abs(price_diff)/last_trade_price
+                    self._total_profit = self._total_profit - 100*(abs(price_diff)/last_trade_price)
             if self._position == Positions.Long:
                 self._total_profit = self._total_profit - fee
                 if price_diff > 0:
-                    self._total_profit = self._total_profit + abs(price_diff)/last_trade_price
+                    self._total_profit = self._total_profit + 100*(abs(price_diff)/last_trade_price)
                 if price_diff < 0:
-                    self._total_profit = self._total_profit - abs(price_diff)/last_trade_price
+                    self._total_profit = self._total_profit - 100*(abs(price_diff)/last_trade_price)
         if action == Actions.Sell.value:
             if self._position == Positions.Flat:
                 self._total_profit = self._total_profit - fee
             if self._position == Positions.Long:
                 self._total_profit = self._total_profit - fee
                 if price_diff > 0:
-                    self._total_profit = self._total_profit + abs(price_diff)/last_trade_price
+                    self._total_profit = self._total_profit + 100*(abs(price_diff)/last_trade_price)
                 if price_diff < 0:
-                    self._total_profit = self._total_profit - abs(price_diff)/last_trade_price
+                    self._total_profit = self._total_profit - 100*(abs(price_diff)/last_trade_price)
             if self._position == Positions.Short:
                 self._total_profit = self._total_profit - fee
                 if price_diff < 0:
-                    self._total_profit = self._total_profit + abs(price_diff)/last_trade_price
+                    self._total_profit = self._total_profit + 100*(abs(price_diff)/last_trade_price)
                 if price_diff > 0:
-                    self._total_profit = self._total_profit - abs(price_diff)/last_trade_price
+                    self._total_profit = self._total_profit - 100*(abs(price_diff)/last_trade_price)
 
                 
 

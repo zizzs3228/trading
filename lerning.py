@@ -9,30 +9,20 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def get_price_data_binance(ticker:str,limit:int,start_str:str, end_str:str,interval = Client.KLINE_INTERVAL_1DAY)->pd.DataFrame:
-    client = Client(api, secret)
-    df = pd.DataFrame(client.get_historical_klines(symbol=ticker, interval=interval,start_str=start_str, end_str=end_str))
-    df.columns=['date','Open','High','Low','Close','Volume','close_time','d1','d2','d3','d4','d5']
-    df = df.drop(['close_time','d1','d2','d3','d4','d5'],axis=1)
-    df['date'] = pd.to_datetime(df['date']*1000000)
-    df['Open'] = df['Open'].astype(float)
-    df['High'] = df['High'].astype(float)
-    df['Low'] = df['Low'].astype(float)
-    df['Close'] = df['Close'].astype(float)
-    # df.set_index('date',inplace=True)
-    df['Volume'] = df['Volume'].apply(lambda x:round(float(x),2))
-    return df
-
 def add_signals(env):
     start = env.frame_bound[0] - env.window_size
     end = env.frame_bound[1]
     prices = env.df.loc[:,'Close'].to_numpy()[start:end]
-    signal_features = env.df.loc[:,['PCTOpen','PCTHigh','PCTLow','PCTClose','PCTVolume','RSX']].to_numpy()[start:end]
+    signal_features = env.df.loc[:,['PCTOpen','PCTHigh','PCTLow','PCTClose','PCTVolume','RSX','SLOPE']].to_numpy()[start:end]
     return prices, signal_features
 
 class MyCustomEnv(StocksEnv):
     _process_data = add_signals
-
+    
+def SMA(period: int, df:pd.DataFrame) -> pd.DataFrame:
+    df['SMA'] = df['Close'].rolling(window=period).mean()
+    # Calculate the percent change of the SMA
+    df['SMA_pct'] = df['SMA'].pct_change()
 
 
 traindf = pd.read_csv('traindf.csv')
@@ -65,8 +55,10 @@ enddf['RSX'] = ta.rsx(enddf['Close'],21)
 # traindf['ER'] = ta.er(traindf['Close'])
 # testdf['ER'] = ta.er(testdf['Close'])
 
-# traindf['SLOPE'] = ta.slope(traindf['Close'])
-# testdf['SLOPE']= ta.slope(testdf['Close'])
+traindf['SLOPE'] = ta.slope(traindf['Close'],200)
+testdf['SLOPE']= ta.slope(testdf['Close'],200)
+enddf['SLOPE']= ta.slope(enddf['Close'],200)
+
 
 
 # traindf['hammer'] = ta.cdl_pattern(traindf['Open'],traindf['High'],traindf['Low'],traindf['Close'],name="hammer")
@@ -120,21 +112,19 @@ enddf['PCTClose'] = enddf['Close'].pct_change()
 enddf['PCTVolume'] = enddf['Volume'].pct_change()
 
 #ИЗМЕНИ ИМЯ
-modelname = 'test120CR-1'
+modelname = 'test149'
 log_path = os.path.join('logs')
 model_path = os.path.join('models',f'{modelname}')
 # stats_path = os.path.join(log_path, "vec_normalize.pkl")
 window_size = 50
 start_index = window_size
 end_index = len(traindf)
-num_cpu = 1
 
+env = MyCustomEnv(df=traindf, frame_bound=(start_index+202,end_index), window_size=window_size)
 
-env = MyCustomEnv(df=traindf, frame_bound=(start_index+50,end_index), window_size=window_size)
-
-model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=1e-4,ent_coef=0.01,vf_coef=2.5,batch_size=512,clip_range=1)
+model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=3e-4,ent_coef=0.01,vf_coef=2.5,batch_size=512,clip_range=0.3)
 # model = PPO.load("models\\PPO_NEWENV_EQREW_LR=3e-0\\1990000.zip",env=env)
 TIMESTEPS = 10000
-for i in range(1,60):
+for i in range(1,500):
     model.learn(total_timesteps=TIMESTEPS,reset_num_timesteps=False,tb_log_name=modelname)
     model.save(os.path.join(f'{model_path}',f'{TIMESTEPS*i}'))
