@@ -32,9 +32,9 @@ class StocksEnv(TradingEnv):
         current_price = self.prices[self._current_tick]
         last_trade_price = self.prices[self._last_trade_tick]
         price_diff = current_price - last_trade_price
-        fee = 0.2
+        fee = 0.1
         holding_reward = 0.005
-        holding_punishment = 0.005
+        holding_punishment = -0.005
         
         if action == Actions.Hold.value:
             if self._position == Positions.Flat:
@@ -43,10 +43,10 @@ class StocksEnv(TradingEnv):
                 if price_diff > 0:
                     step_reward = 0
                 if price_diff < 0:
-                    step_reward = -0.001
+                    step_reward = holding_punishment
             if self._position == Positions.Short:
                 if price_diff > 0:
-                    step_reward = -0.001
+                    step_reward = holding_punishment
                 if price_diff < 0:
                     step_reward = 0
         if action == Actions.Buy.value:

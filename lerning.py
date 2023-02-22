@@ -3,6 +3,8 @@ import pandas as pd
 from stocks_env import StocksEnv
 from stable_baselines3 import PPO
 import os
+from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3.common.callbacks import EvalCallback
 import pandas_ta as ta
 from pon import api,secret
 import warnings
@@ -13,7 +15,7 @@ def add_signals(env):
     start = env.frame_bound[0] - env.window_size
     end = env.frame_bound[1]
     prices = env.df.loc[:,'Close'].to_numpy()[start:end]
-    signal_features = env.df.loc[:,['PCTOpen','PCTHigh','PCTLow','PCTClose','PCTVolume','RSX','SLOPE']].to_numpy()[start:end]
+    signal_features = env.df.loc[:,['RSX','SLOPE']].to_numpy()[start:end]
     return prices, signal_features
 
 class MyCustomEnv(StocksEnv):
@@ -23,6 +25,7 @@ def SMA(period: int, df:pd.DataFrame) -> pd.DataFrame:
     df['SMA'] = df['Close'].rolling(window=period).mean()
     # Calculate the percent change of the SMA
     df['SMA_pct'] = df['SMA'].pct_change()
+    
 
 
 traindf = pd.read_csv('traindf.csv')
@@ -93,26 +96,26 @@ enddf['SLOPE']= ta.slope(enddf['Close'],200)
 #Trix: trix
 
 
-traindf['PCTOpen'] = traindf['Open'].pct_change()
-traindf['PCTHigh'] = traindf['High'].pct_change()
-traindf['PCTLow'] = traindf['Low'].pct_change()
-traindf['PCTClose'] = traindf['Close'].pct_change()
-traindf['PCTVolume'] = traindf['Volume'].pct_change()
+# traindf['PCTOpen'] = traindf['Open'].pct_change()
+# traindf['PCTHigh'] = traindf['High'].pct_change()
+# traindf['PCTLow'] = traindf['Low'].pct_change()
+# traindf['PCTClose'] = traindf['Close'].pct_change()
+# traindf['PCTVolume'] = traindf['Volume'].pct_change()
 
-testdf['PCTOpen'] = testdf['Open'].pct_change()
-testdf['PCTHigh'] = testdf['High'].pct_change()
-testdf['PCTLow'] = testdf['Low'].pct_change()
-testdf['PCTClose'] = testdf['Close'].pct_change()
-testdf['PCTVolume'] = testdf['Volume'].pct_change()
+# testdf['PCTOpen'] = testdf['Open'].pct_change()
+# testdf['PCTHigh'] = testdf['High'].pct_change()
+# testdf['PCTLow'] = testdf['Low'].pct_change()
+# testdf['PCTClose'] = testdf['Close'].pct_change()
+# testdf['PCTVolume'] = testdf['Volume'].pct_change()
 
-enddf['PCTOpen'] = enddf['Open'].pct_change()
-enddf['PCTHigh'] = enddf['High'].pct_change()
-enddf['PCTLow'] = enddf['Low'].pct_change()
-enddf['PCTClose'] = enddf['Close'].pct_change()
-enddf['PCTVolume'] = enddf['Volume'].pct_change()
+# enddf['PCTOpen'] = enddf['Open'].pct_change()
+# enddf['PCTHigh'] = enddf['High'].pct_change()
+# enddf['PCTLow'] = enddf['Low'].pct_change()
+# enddf['PCTClose'] = enddf['Close'].pct_change()
+# enddf['PCTVolume'] = enddf['Volume'].pct_change()
 
 #ИЗМЕНИ ИМЯ
-modelname = 'test155'
+modelname = 'test158'
 log_path = os.path.join('logs')
 model_path = os.path.join('models',f'{modelname}')
 # stats_path = os.path.join(log_path, "vec_normalize.pkl")
@@ -120,11 +123,13 @@ window_size = 50
 start_index = window_size
 end_index = len(traindf)
 
-env = MyCustomEnv(df=traindf, frame_bound=(start_index+202,end_index), window_size=window_size)
 
+env = MyCustomEnv(df=traindf, frame_bound=(start_index+202,end_index), window_size=window_size)
 model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=0.0001,ent_coef=0.01,vf_coef=2.5,batch_size=512,clip_range=0.1,seed=123)
 # model = PPO.load("models\\PPO_NEWENV_EQREW_LR=3e-0\\1990000.zip",env=env)
+
+
 TIMESTEPS = 10000
-for i in range(1,500):
+for i in range(1,100):
     model.learn(total_timesteps=TIMESTEPS,reset_num_timesteps=False,tb_log_name=modelname)
     model.save(os.path.join(f'{model_path}',f'{TIMESTEPS*i}'))
