@@ -14,24 +14,40 @@ def add_signals(env):
     start = env.frame_bound[0] - env.window_size
     end = env.frame_bound[1]
     prices = env.df.loc[:,'Close'].to_numpy()[start:end]
-    signal_features = env.df.loc[:,['SMA200','SMA200_pct','SMA9','SMA9_pct','SMA12','SMA12_pct','RSX']].to_numpy()[start:end]
+    signal_features = env.df.loc[:,['SMA3','SMA6','SMA9','SMA12','SMA25','SMA50','SMA200','RSX']].to_numpy()[start:end]
     return prices, signal_features
 
 class MyCustomEnv(StocksEnv):
     _process_data = add_signals
     
-def SMA(df:pd.DataFrame) -> pd.DataFrame:
-    df['SMA200'] = df['Close'].rolling(window=200).mean()
+def SMA(df:pd.DataFrame) -> pd.DataFrame:    
+    df['SMA3'] = df['Close'].rolling(window=3).mean()
     # Calculate the percent change of the SMA
-    df['SMA200_pct'] = df['SMA200'].pct_change()
+    df['SMA3_pct'] = df['SMA3'].pct_change()*1000
+    
+    df['SMA6'] = df['Close'].rolling(window=6).mean()
+    # Calculate the percent change of the SMA
+    df['SMA6_pct'] = df['SMA6'].pct_change()*1000
     
     df['SMA9'] = df['Close'].rolling(window=9).mean()
     # Calculate the percent change of the SMA
-    df['SMA9_pct'] = df['SMA9'].pct_change()
+    df['SMA9_pct'] = df['SMA9'].pct_change()*1000
     
     df['SMA12'] = df['Close'].rolling(window=12).mean()
     # Calculate the percent change of the SMA
-    df['SMA12_pct'] = df['SMA12'].pct_change()
+    df['SMA12_pct'] = df['SMA12'].pct_change()*1000
+    
+    df['SMA25'] = df['Close'].rolling(window=25).mean()
+    # Calculate the percent change of the SMA
+    df['SMA25_pct'] = df['SMA25'].pct_change()*1000
+    
+    df['SMA50'] = df['Close'].rolling(window=50).mean()
+    # Calculate the percent change of the SMA
+    df['SMA50_pct'] = df['SMA50'].pct_change()*1000
+    
+    df['SMA200'] = df['Close'].rolling(window=200).mean()
+    # Calculate the percent change of the SMA
+    df['SMA200_pct'] = df['SMA200'].pct_change()*1000
     
 
 
@@ -122,7 +138,7 @@ SMA(enddf)
 # enddf['PCTVolume'] = enddf['Volume'].pct_change()
 
 #ИЗМЕНИ ИМЯ
-modelname = 'test166'
+modelname = 'test176'
 log_path = os.path.join('logs')
 model_path = os.path.join('models',f'{modelname}')
 # stats_path = os.path.join(log_path, "vec_normalize.pkl")
@@ -132,11 +148,11 @@ end_index = len(traindf)
 
 
 env = MyCustomEnv(df=traindf, frame_bound=(start_index+202,end_index), window_size=window_size)
-model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=0.001,ent_coef=0.01,vf_coef=2.5,batch_size=512,clip_range=0.1,seed=123)
+model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=0.0001,ent_coef=0.01,vf_coef=2.5,batch_size=512,clip_range=0.1,seed=123)
 # model = PPO.load("models\\PPO_NEWENV_EQREW_LR=3e-0\\1990000.zip",env=env)
 
 
 TIMESTEPS = 10000
-for i in range(1,101):
+for i in range(1,201):
     model.learn(total_timesteps=TIMESTEPS,reset_num_timesteps=False,tb_log_name=modelname)
     model.save(os.path.join(f'{model_path}',f'{TIMESTEPS*i}'))
