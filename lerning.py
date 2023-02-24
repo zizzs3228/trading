@@ -138,7 +138,7 @@ SMA(enddf)
 # enddf['PCTVolume'] = enddf['Volume'].pct_change()
 
 #ИЗМЕНИ ИМЯ
-modelname = 'test176'
+modelname = 'test181'
 log_path = os.path.join('logs')
 model_path = os.path.join('models',f'{modelname}')
 # stats_path = os.path.join(log_path, "vec_normalize.pkl")
@@ -148,7 +148,7 @@ end_index = len(traindf)
 
 
 env = MyCustomEnv(df=traindf, frame_bound=(start_index+202,end_index), window_size=window_size)
-model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=0.0001,ent_coef=0.01,vf_coef=2.5,batch_size=512,clip_range=0.1,seed=123)
+model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=0.1,ent_coef=0.01,vf_coef=2.5,batch_size=512,clip_range=0.1,seed=123)
 # model = PPO.load("models\\PPO_NEWENV_EQREW_LR=3e-0\\1990000.zip",env=env)
 
 
