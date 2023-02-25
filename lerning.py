@@ -14,7 +14,7 @@ def add_signals(env):
     start = env.frame_bound[0] - env.window_size
     end = env.frame_bound[1]
     prices = env.df.loc[:,'Close'].to_numpy()[start:end]
-    signal_features = env.df.loc[:,['SMA3','SMA6','SMA9','SMA12','SMA25','SMA50','SMA200','RSX']].to_numpy()[start:end]
+    signal_features = env.df.loc[:,['SMA3_pct','SMA6_pct','SMA9_pct','SMA12_pct','SMA25_pct','SMA50_pct','SMA200_pct','RSX']].to_numpy()[start:end]
     return prices, signal_features
 
 class MyCustomEnv(StocksEnv):
@@ -138,7 +138,7 @@ SMA(enddf)
 # enddf['PCTVolume'] = enddf['Volume'].pct_change()
 
 #ИЗМЕНИ ИМЯ
-modelname = 'test181'
+modelname = 'test204'
 log_path = os.path.join('logs')
 model_path = os.path.join('models',f'{modelname}')
 # stats_path = os.path.join(log_path, "vec_normalize.pkl")
@@ -148,11 +148,11 @@ end_index = len(traindf)
 
 
 env = MyCustomEnv(df=traindf, frame_bound=(start_index+202,end_index), window_size=window_size)
-model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=0.1,ent_coef=0.01,vf_coef=2.5,batch_size=512,clip_range=0.1,seed=123)
+model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=0.000001,seed=123)
 # model = PPO.load("models\\PPO_NEWENV_EQREW_LR=3e-0\\1990000.zip",env=env)
 
 
 TIMESTEPS = 10000
-for i in range(1,201):
+for i in range(1,401):
     model.learn(total_timesteps=TIMESTEPS,reset_num_timesteps=False,tb_log_name=modelname)
     model.save(os.path.join(f'{model_path}',f'{TIMESTEPS*i}'))
