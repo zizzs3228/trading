@@ -14,8 +14,7 @@ def add_signals(env):
     start = env.frame_bound[0] - env.window_size
     end = env.frame_bound[1]
     prices = env.df.loc[:,'Close'].to_numpy()[start:end]
-    signal_features = env.df.loc[:,['SMA3_pct','SMA6_pct','SMA9_pct','SMA12_pct','SMA25_pct','SMA50_pct','SMA200_pct',
-                                    'SMA3_trend','SMA6_trend','SMA9_trend','SMA12_trend','SMA25_trend','SMA50_trend','SMA200_trend','RSX']].to_numpy()[start:end]
+    signal_features = env.df.loc[:,['SMA3_trend','SMA6_trend','SMA9_trend','SMA12_trend','SMA25_trend','SMA50_trend','SMA200_trend','RSX']].to_numpy()[start:end]
     return prices, signal_features
 
 class MyCustomEnv(StocksEnv):
@@ -147,7 +146,7 @@ SMA_trend(enddf)
 # enddf['PCTVolume'] = enddf['Volume'].pct_change()
 
 #ИЗМЕНИ ИМЯ
-modelname = 'test213'
+modelname = 'test226BS64'
 log_path = os.path.join('logs')
 model_path = os.path.join('models',f'{modelname}')
 # stats_path = os.path.join(log_path, "vec_normalize.pkl")
@@ -157,7 +156,7 @@ end_index = len(traindf)
 
 
 env = MyCustomEnv(df=traindf, frame_bound=(start_index+202,end_index), window_size=window_size)
-model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=0.0001,seed=123)
+model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=0.01,seed=123,batch_size=64)
 # model = PPO.load("models\\PPO_NEWENV_EQREW_LR=3e-0\\1990000.zip",env=env)
 
 

@@ -28,12 +28,14 @@ class TradingEnv(gym.Env):
         self.df = df
         self.window_size = window_size
         self.prices, self.signal_features = self._process_data()
-        self.shape = (window_size, self.signal_features.shape[1])
 
-        # spaces
+        # define the shape of the signal features observation space
+        signal_features_shape = (window_size, self.signal_features.shape[1]+1)
+
         self.action_space = spaces.Discrete(len(Actions))
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=self.shape, dtype=np.float64)
-
+        
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=signal_features_shape, dtype=np.float64)
+        
         # episode
         self._start_tick = self.window_size
         self._end_tick = len(self.prices) - 1
@@ -111,7 +113,11 @@ class TradingEnv(gym.Env):
 
 
     def _get_observation(self):
-        return self.signal_features[(self._current_tick-self.window_size+1):self._current_tick+1]
+        ones_array = np.ones((self.window_size,1)) * self._position.value
+        signal_to_return = self.signal_features[(self._current_tick-self.window_size+1):self._current_tick+1]
+        signal_to_return = np.concatenate([signal_to_return, ones_array], axis=1)
+        return signal_to_return
+
 
 
     def _update_history(self, info):
