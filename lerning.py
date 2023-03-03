@@ -1,7 +1,7 @@
 from binance.client import Client
 import pandas as pd
 from stocks_env import StocksEnv
-from stable_baselines3 import PPO,DQN
+from stable_baselines3 import A2C
 import os
 from stable_baselines3.common.callbacks import CheckpointCallback
 import pandas_ta as ta
@@ -146,7 +146,7 @@ SMA_trend(enddf)
 # enddf['PCTVolume'] = enddf['Volume'].pct_change()
 
 #ИЗМЕНИ ИМЯ
-modelname = 'test226BS64'
+modelname = 'test230'
 log_path = os.path.join('logs')
 model_path = os.path.join('models',f'{modelname}')
 # stats_path = os.path.join(log_path, "vec_normalize.pkl")
@@ -156,7 +156,7 @@ end_index = len(traindf)
 
 
 env = MyCustomEnv(df=traindf, frame_bound=(start_index+202,end_index), window_size=window_size)
-model = DQN("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=0.01,seed=123,batch_size=64)
+model = A2C("MlpPolicy", env, verbose=1, tensorboard_log=log_path,learning_rate=1e-4,seed=69420)
 # model = PPO.load("models\\PPO_NEWENV_EQREW_LR=3e-0\\1990000.zip",env=env)
 
 
