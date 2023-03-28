@@ -1,0 +1,3 @@
+api = 'qQgYhzJtusMHzi3a6niG0Z93ctb5YfBeUFStf16wWvb78Ttm3X9utMepyDvMjool'
+secret = 'BoPrSlj1UZgEjTYBIpCSghbnzwhiMUAFmVLJCJaqhq1nU0cMhndgn8XnBkWnsEL6'
+BOT_API = '5877372044:AAG9TpiBG4qWjvypiFWmzPaXVzc4ythSGms'

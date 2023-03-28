@@ -1,5 +1,6 @@
 from aiogram import Bot, Dispatcher, executor, types
 import schedule
+import plotly.io as pio
 import time
 import asyncio
 from binance.client import Client
@@ -182,47 +183,84 @@ async def message(message:str):
     await bot.send_message(468424685, message)
     await bot.close()
 
+def hammer_up(current:list):
+    #ohlc - 0123
+    #При первом множителе 2 винрейт почти такой же, но сделок больше, что увеличивает прибыль
+    if current[0]>current[3]:
+        if (current[0]-current[3])*3 < (current[1]-current[2]) and (current[1]-current[0])*4 < (current[0]-current[2]):
+            return True
+    if current[0]<current[3]:
+        if (current[3]-current[0])*3 < (current[1]-current[2]) and (current[1]-current[3])*4 < (current[3]-current[2]):
+            return True
+
+def falling_star_down(current:list):
+    if current[0]>current[3]:
+        if (current[0]-current[3])*3 < (current[1]-current[2]) and (current[3]-current[2])*2 < (current[1]-current[3]):
+            return True
+    
+    if current[0]<current[3]:
+        if (current[3]-current[0])*3 < (current[1]-current[2]) and (current[0]-current[2])*2 < (current[1]-current[0]):
+            return True
+
 def main():
     thread = threading.Thread(target=trading)
     thread.start()
 
 def trading():
     for ticker in tickers:
-        df_higher_tf = get_price_data_binance(ticker,300,interval=Client.KLINE_INTERVAL_15MINUTE)
-        df_lower_tf = get_price_data_binance(ticker,200,interval=Client.KLINE_INTERVAL_5MINUTE)
-        df_lower_tf = add_rsx_LF(21,df_lower_tf)
-        df_lower_tf = add_moving_average(6,df_lower_tf)
-        df_higher_tf = add_rsx_HF(14,df_higher_tf)
-        print(f'Работаю с {ticker}')
+        df = get_price_data_binance('BTCUSDT',1000,interval=Client.KLINE_INTERVAL_5MINUTE)
+        buy_orders = []
+        sell_orders = []
 
-        if df_lower_tf.iloc[-4]['low'] > df_lower_tf.iloc[-3]['low'] and df_lower_tf.iloc[-2]['close'] > df_lower_tf.iloc[-4]['open'] and df_lower_tf.iloc[-4]['open'] > df_lower_tf.iloc[-4]['close']:
-            print(f'up_reversal at {ticker}')
-            if df_higher_tf.iloc[-2]['hidden_up_divergence']:
-                print(f'hidden_up_divergence at {ticker}')
-                if df_lower_tf.iloc[-2]['classic_up_divergence']:
-                    print(f'classic_up_divergence at {ticker}')
+        multiplier = 3
+        counter = 0
+        for i in range(20, len(df)-15):
+            if hammer_up(df.loc[i-1, ['open', 'high', 'low', 'close']]):
+                if min(df.loc[i-7:i-2,'low'])>=df.iloc[i-1]['low']:
+                    buy_orders.append((df.iloc[i]['open'], df.iloc[i-1]['low'],
+                    round(df.iloc[i]['open'] + (df.iloc[i]['open']-df.iloc[i-1]['low'])*multiplier,2),
+                    df.iloc[i]['date']))
+                    # fig = go.Figure(data=[go.Candlestick(x=df['date'][i-19:i+14],
+                    #                         open=df['open'][i-19:i+14],
+                    #                         high=df['high'][i-19:i+14],
+                    #                         low=df['low'][i-19:i+14],
+                    #                         close=df['close'][i-19:i+14])])
+                    # fig.add_trace(go.Scatter(x=[df.iloc[i]['date']],y=[df.iloc[i]['open']],mode='markers', marker=dict(size=4, color='white')))
+                    # fig.add_trace(go.Scatter(x=[df.iloc[i]['date']],y=[df.iloc[i-1]['low']],mode='markers', marker=dict(size=4, color='red')))
+                    # fig.add_trace(go.Scatter(x=[df.iloc[i]['date']],y=[round(df.iloc[i]['open'] + (df.iloc[i]['open']-df.iloc[i-1]['low'])*multiplier,2)],mode='markers', marker=dict(size=4, color='green')))
+                    # counter+=1
+                    # pio.write_image(fig, f'screens\\screen№{counter}.jpg')
                     stringTOsend = f"""Токен:{ticker}
 Позиция: LONG
-Текущая цена: {df_lower_tf.iloc[-1]['close']}
-Значение RSX: {df_lower_tf.iloc[-2]['RSX']}
-Цена стопа: {df_lower_tf.iloc[-3]['low']}
-Время сигнала: {df_lower_tf.iloc[-1]['date']}"""
+Текущая цена: {df.iloc[-1]['close']}
+Значение RSX: {df.iloc[-2]['RSX']}
+Цена стопа: {df.iloc[-3]['low']}
+Время сигнала: {df.iloc[-1]['date']}"""
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     loop.run_until_complete(message(stringTOsend))
 
-        if df_lower_tf.iloc[-4]['high'] < df_lower_tf.iloc[-3]['high'] and df_lower_tf.iloc[-2]['close'] < df_lower_tf.iloc[-4]['open'] and df_lower_tf.iloc[-4]['open'] < df_lower_tf.iloc[-4]['close']:
-            print(f'down_reversal at {ticker}')
-            if df_higher_tf.iloc[-2]['hidden_down_divergence']:
-                print(f'hidden_down_divergence at {ticker}')
-                if df_lower_tf.iloc[-2]['classic_down_divergence']:
-                    print(f'classic_down_divergence at {ticker}')
+        if falling_star_down(df.loc[i-1, ['open', 'high', 'low', 'close']]):
+                if max(df.loc[i-7:i-2,'high'])<=df.iloc[i-1]['high']:
+                    sell_orders.append((df.iloc[i]['open'], df.iloc[i-1]['high'],
+                    round(df.iloc[i]['open'] - (df.iloc[i-1]['high']-df.iloc[i]['open'])*multiplier,2),
+                    df.iloc[i]['date'])) 
+                    # fig = go.Figure(data=[go.Candlestick(x=df['date'][i-19:i+14],
+                    #                         open=df['open'][i-19:i+14],
+                    #                         high=df['high'][i-19:i+14],
+                    #                         low=df['low'][i-19:i+14],
+                    #                         close=df['close'][i-19:i+14])])
+                    # fig.add_trace(go.Scatter(x=[df.iloc[i]['date']],y=[df.iloc[i]['open']],mode='markers', marker=dict(size=4, color='white')))
+                    # fig.add_trace(go.Scatter(x=[df.iloc[i]['date']],y=[df.iloc[i-1]['high']],mode='markers', marker=dict(size=4, color='red')))
+                    # fig.add_trace(go.Scatter(x=[df.iloc[i]['date']],y=[round(df.iloc[i]['open'] - (df.iloc[i-1]['high']-df.iloc[i]['open'])*multiplier,2)],mode='markers', marker=dict(size=4, color='green')))
+                    # counter+=1
+                    # pio.write_image(fig, f'screens\\screen№{counter}.jpg')
                     stringTOsend = f"""Токен:{ticker}
 Позиция:SHORT
-Текущая цена: {df_lower_tf.iloc[-1]['close']}
-Значение RSX: {df_lower_tf.iloc[-2]['RSX']}
-Цена стопа: {df_lower_tf.iloc[-3]['high']}
-Время сигнала: {df_lower_tf.iloc[-1]['date']}"""
+Текущая цена: {df.iloc[-1]['close']}
+Значение RSX: {df.iloc[-2]['RSX']}
+Цена стопа: {df.iloc[-3]['high']}
+Время сигнала: {df.iloc[-1]['date']}"""
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     loop.run_until_complete(message(stringTOsend))
